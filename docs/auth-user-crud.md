@@ -11,7 +11,7 @@ Este documento descreve **o que foi feito**, **como funciona** e **o que ainda e
 - ✅ Domínio, casos de uso e camada HTTP completos
 - ✅ Autenticação via JWT em cookies HTTP-only
 - ✅ Fluxo completo funcional ponta a ponta (testado manualmente via `/docs`)
-- ⏳ Persistência em banco real (Postgres)
+- ✅ Persistência em Postgres via SQLAlchemy async + Alembic
 - ⏳ Testes automatizados
 - ✅ Atualização do README principal
 
@@ -51,8 +51,10 @@ src/
 │   │   ├── password_hasher.py   # Argon2PasswordHasher (via pwdlib)
 │   │   └── token_service.py     # JwtTokenService (via pyjwt + hashlib)
 │   ├── persistence/
-│   │   ├── in_memory_user_repository.py
-│   │   └── in_memory_refresh_token_repository.py
+│   │   ├── base.py              # Base declarativa + TimestampMixin
+│   │   ├── database.py          # Engine async + get_db() (commit/rollback)
+│   │   ├── models/              # UserModel, RefreshTokenModel, ProjectModel
+│   │   └── repositories/        # SqlAlchemyUserRepository, SqlAlchemyRefreshTokenRepository
 │   └── settings.py              # Settings (pydantic-settings, lê .env)
 │
 └── presentation/                # Camada HTTP (FastAPI)
@@ -166,25 +168,13 @@ COOKIE_SAMESITE=lax
 - **Infrastructure** implementa as interfaces.
 - **Presentation** monta as dependências (composition root em `dependencies/container.py`) e expõe HTTP.
 
-Trocar a persistência (in-memory → Postgres) altera apenas duas linhas em `container.py`. Casos de uso, rotas e testes não mudam.
+Os repositórios SQLAlchemy são injetados em `container.py` via `Depends(get_db)`, que abre uma `AsyncSession` por request com commit no sucesso e rollback em exceção.
 
 ---
 
 ## ⏳ O que está faltando
 
-### 1. Persistência em banco real (em andamento por outro membro)
-
-Atualmente os repositórios são implementações em memória (`InMemoryUserRepository`, `InMemoryRefreshTokenRepository`). Dados são perdidos ao reiniciar o servidor.
-
-O que falta:
-- Definir o ORM (SQLAlchemy 2.0 + Alembic, conforme convenção do mercado).
-- Implementar `SqlAlchemyUserRepository` e `SqlAlchemyRefreshTokenRepository`.
-- Configurar conexão com Postgres (DSN no `.env`, pool de conexões).
-- Migrações iniciais (Alembic) para `users` e `refresh_tokens`.
-- Adicionar `postgres` no `docker-compose.yml`.
-- Atualizar `container.py` para usar as novas implementações (substituição direta — nenhuma outra camada precisa mudar).
-
-### 2. Testes automatizados
+### 1. Testes automatizados
 
 A issue lista os seguintes cenários como obrigatórios:
 
@@ -203,28 +193,21 @@ A issue lista os seguintes cenários como obrigatórios:
 - [ ] Alteração de senha sem autenticação é rejeitada.
 - [ ] Alteração de senha revoga refresh tokens ativos.
 
-A arquitetura já está preparada: os testes podem usar os repositórios em memória existentes e seguirão passando quando a persistência em Postgres for plugada.
-
-### 3. Atualização do README principal
-
-O `README.md` raiz precisa receber uma seção com instruções básicas do módulo:
-- Como configurar `.env` (especialmente `JWT_SECRET_KEY`).
-- Endpoints disponíveis e formato esperado.
-- Como rodar localmente e acessar `/docs` para testar.
+A arquitetura permite testes de integração contra o Postgres do compose (com truncate entre testes, como já feito em `tests/integration/test_projects_api.py`).
 
 ---
 
 ## 🚀 Como rodar localmente
 
 ```bash
-# Instala dependências
-uv sync --dev
-
-# Cria .env (e edite JWT_SECRET_KEY com uma string aleatória forte)
+# 1. Cria .env (e edite JWT_SECRET_KEY com uma string aleatória forte)
 cp .env.example .env
 
-# Sobe a aplicação em modo dev
-uv run uvicorn main:app --app-dir src --reload
+# 2. Sobe API + Postgres
+make up
+
+# 3. Aplica migrations
+make migrate
 ```
 
 Acesse `http://localhost:8000/docs` para a documentação interativa (Swagger UI) e teste o fluxo completo:
