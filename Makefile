@@ -4,11 +4,11 @@ APP_URL := http://localhost:8000
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build up start down stop restart rebuild logs ps shell health test clean
+.PHONY: help build up start down stop restart rebuild logs ps shell health test clean migrate migration shell-db
 
 help: ## Lista os comandos disponiveis
 	@echo "Comandos disponiveis:"
-	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ {printf "  make %-12s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+	@awk 'BEGIN {FS = ":.*##"} /^[a-zA-Z_-]+:.*##/ {printf "  make %-16s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 build: ## Constroi/reconstroi a imagem Docker
 	@$(COMPOSE) build
@@ -46,3 +46,12 @@ test: ## Roda os testes no Docker
 
 clean: ## Remove containers, rede e volumes do projeto
 	@$(COMPOSE) down -v --remove-orphans
+
+migrate: ## Aplica todas as migrations pendentes (alembic upgrade head)
+	@$(COMPOSE) run --rm $(SERVICE) uv run alembic upgrade head
+
+migration: ## Gera nova migration (uso: make migration MSG="descricao")
+	@$(COMPOSE) run --rm $(SERVICE) uv run alembic revision --autogenerate -m "$(MSG)"
+
+shell-db: ## Abre psql dentro do container do banco
+	@$(COMPOSE) exec db psql -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-normalizador}
