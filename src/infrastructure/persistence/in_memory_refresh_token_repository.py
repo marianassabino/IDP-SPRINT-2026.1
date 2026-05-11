@@ -11,7 +11,6 @@ class InMemoryRefreshTokenRepository(RefreshTokenRepository):
     """Refresh tokens em memória, para testes."""
 
     def __init__(self) -> None:
-        # chave = token_hash (string), valor = RefreshToken
         self._by_hash: dict[str, RefreshToken] = {}
         self._lock = asyncio.Lock()
 

@@ -11,19 +11,7 @@ from application.auth.services import PasswordHasher, TokenService
 
 
 class LoginUserUseCase:
-    """
-    Autentica um usuário e abre sessão.
-
-    Fluxo:
-      1. Busca usuário pelo email.
-      2. Verifica a senha.
-      3. Se algo falhar (usuário não existe OU senha errada), lança a MESMA exceção
-         InvalidCredentials. Isso impede um atacante de descobrir se um email
-         está cadastrado ou não.
-      4. Emite access + refresh tokens.
-      5. Persiste hash do refresh token.
-      6. Retorna AuthenticatedSession.
-    """
+    """Autentica usuário verificando credenciais com mensagem genérica em caso de falha (segurança)."""
 
     def __init__(
         self,
@@ -38,20 +26,16 @@ class LoginUserUseCase:
         self._tokens = token_service
 
     async def execute(self, command: LoginUserCommand) -> AuthenticatedSession:
-        # 1. Busca usuário
         user = await self._user_repo.find_by_email(command.email)
 
-        # 2 + 3. Mensagem genérica em ambos os casos (segurança)
         if user is None:
             raise InvalidCredentials("Invalid email or password.")
         if not self._hasher.verify(command.password, user.password_hash):
             raise InvalidCredentials("Invalid email or password.")
 
-        # 4. Emite tokens
         access = self._tokens.issue_access_token(user.id)
         refresh_pair = self._tokens.issue_refresh_token(user.id)
 
-        # 5. Salva hash do refresh token
         expires_at = datetime.now(timezone.utc) + timedelta(
             seconds=refresh_pair.expires_in_seconds
         )
@@ -63,7 +47,6 @@ class LoginUserUseCase:
             )
         )
 
-        # 6. Retorna
         return AuthenticatedSession(
             user_id=user.id,
             user_email=user.email,

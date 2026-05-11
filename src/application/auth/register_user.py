@@ -7,23 +7,11 @@ from domain.users.repositories import UserRepository
 from application.auth.dtos import AuthenticatedSession, RegisterUserCommand
 from application.auth.services import PasswordHasher, TokenService
 
-# Regra mínima de senha (poderia ficar em config, mas pra MVP fica explícito aqui)
 MIN_PASSWORD_LENGTH = 8
 
 
 class RegisterUserUseCase:
-    """
-    Registra um novo usuário e já abre sessão (define cookies de auth).
-
-    Fluxo:
-      1. Verifica se email já existe (case-insensitive porque User normaliza no domain).
-      2. Verifica que a senha atende ao tamanho mínimo.
-      3. Gera hash da senha.
-      4. Cria a entidade User e persiste.
-      5. Emite access token + refresh token.
-      6. Persiste o hash do refresh token.
-      7. Retorna AuthenticatedSession.
-    """
+    """Registra novo usuário com validação de email único e senha mínima, retornando sessão autenticada."""
 
     def __init__(
         self,
@@ -38,28 +26,22 @@ class RegisterUserUseCase:
         self._tokens = token_service
 
     async def execute(self, command: RegisterUserCommand) -> AuthenticatedSession:
-        # 1. Email único
         if await self._user_repo.exists_by_email(command.email):
             raise EmailAlreadyExists(f"Email already registered.")
 
-        # 2. Senha mínima
         if len(command.password) < MIN_PASSWORD_LENGTH:
             raise WeakPassword(
                 f"Password must be at least {MIN_PASSWORD_LENGTH} characters."
             )
 
-        # 3. Hash
         password_hash = self._hasher.hash(command.password)
 
-        # 4. Cria e salva usuário
         user = User(email=command.email, password_hash=password_hash)
         await self._user_repo.save(user)
 
-        # 5. Emite tokens
         access = self._tokens.issue_access_token(user.id)
         refresh_pair = self._tokens.issue_refresh_token(user.id)
 
-        # 6. Salva hash do refresh token
         from datetime import datetime, timedelta, timezone
         from domain.auth.entities import RefreshToken
         expires_at = datetime.now(timezone.utc) + timedelta(
@@ -73,7 +55,6 @@ class RegisterUserUseCase:
             )
         )
 
-        # 7. Retorna o resultado
         return AuthenticatedSession(
             user_id=user.id,
             user_email=user.email,

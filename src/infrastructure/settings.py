@@ -14,7 +14,6 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
 
-    # Cookies
     cookie_secure: bool = False
     cookie_samesite: str = "lax"
 
@@ -38,4 +37,3 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
-

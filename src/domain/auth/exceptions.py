@@ -1,6 +1,4 @@
-"""
-Exceções do domínio de autenticação.
-"""
+"""Exceções do domínio de autenticação."""
 
 
 class AuthDomainError(Exception):
