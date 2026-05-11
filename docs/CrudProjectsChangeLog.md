@@ -55,7 +55,7 @@ Cada camada só conhece a camada imediatamente abaixo via interface. O `get_db()
 
 | # | Entidade / Feature | Complexidade | Desvios do CRUD padrão |
 |---|---|---|---|
-| 1 | `GlobalDictionaryEntry` | Baixa | Nenhum — CRUD padrão em `/dictionary` |
+| 1 | `DictionaryEntry` | Média | Dois escopos (global `/dictionary` e por projeto `/projects/{id}/dictionary`); `list_merged` para pipeline; projeto tem precedência em conflitos de `(kind, name)` |
 | 2 | `ColumnConfig` | Média | `PUT` em lote + endpoint de detecção de colunas (sem `POST`/`DELETE` individuais) |
 | 3 | `Report` | Alta | Upload multipart; sem `DELETE`; `SubmitFeedback` no lugar de `Update` |
 | 4 | `ReportExecution` | Alta | Não é CRUD; criada internamente; só `GET status` e `GET download` |
