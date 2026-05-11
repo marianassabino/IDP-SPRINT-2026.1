@@ -1,13 +1,5 @@
-"""
-Container de dependências (Composition Root).
-
-Cria as implementações concretas e as injeta nos casos de uso.
-
-Quando seu colega terminar a parte de banco real (SQLAlchemy),
-basta trocar as duas linhas que instanciam os repositórios em memória
-pelas implementações com banco. Nada mais muda.
-"""
-from functools import lru_cache
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.auth import (
     LoginUserUseCase,
@@ -17,34 +9,25 @@ from application.auth import (
 )
 from application.auth.services import PasswordHasher, TokenService
 from application.users import ChangePasswordUseCase, GetCurrentUserUseCase
-from domain.auth.repositories import RefreshTokenRepository
-from domain.users.repositories import UserRepository
 from infrastructure.auth import Argon2PasswordHasher, JwtTokenService
-from infrastructure.persistence import (
-    InMemoryRefreshTokenRepository,
-    InMemoryUserRepository,
-)
+from infrastructure.persistence.database import get_db
+from infrastructure.persistence.repositories.auth_repository import SqlAlchemyRefreshTokenRepository
+from infrastructure.persistence.repositories.user_repository import SqlAlchemyUserRepository
 from infrastructure.settings import Settings, get_settings as _get_settings_cached
+from functools import lru_cache
 
-
-# ---------------- SINGLETONS ----------------
-# @lru_cache garante que a função é chamada UMA vez e o resultado fica em cache.
-# Isso transforma cada função em um "singleton" do escopo do processo.
 
 def get_settings() -> Settings:
-    """Configurações lidas do .env (reusa o singleton do infrastructure)."""
     return _get_settings_cached()
 
 
 @lru_cache
 def get_password_hasher() -> PasswordHasher:
-    """Hasher singleton (instanciar Argon2 cada request é caro)."""
     return Argon2PasswordHasher()
 
 
 @lru_cache
 def get_token_service() -> TokenService:
-    """Token service singleton, configurado a partir das settings."""
     settings = get_settings()
     return JwtTokenService(
         secret_key=settings.jwt_secret_key,
@@ -54,69 +37,48 @@ def get_token_service() -> TokenService:
     )
 
 
-@lru_cache
-def get_user_repository() -> UserRepository:
-    """
-    Repositório de usuários.
-
-    Hoje em memória. Quando o colega entregar a versão com banco,
-    troca aqui pelo SqlAlchemyUserRepository(session_factory=...).
-    """
-    return InMemoryUserRepository()
-
-
-@lru_cache
-def get_refresh_token_repository() -> RefreshTokenRepository:
-    """Repositório de refresh tokens. Mesma observação acima."""
-    return InMemoryRefreshTokenRepository()
-
-
-# ---------------- USE CASE PROVIDERS ----------------
-# Essas funções montam um caso de uso pronto pra usar.
-# FastAPI vai chamar via Depends() em cada request.
-
-def provide_register_user() -> RegisterUserUseCase:
+def provide_register_user(db: AsyncSession = Depends(get_db)) -> RegisterUserUseCase:
     return RegisterUserUseCase(
-        user_repo=get_user_repository(),
-        refresh_token_repo=get_refresh_token_repository(),
+        user_repo=SqlAlchemyUserRepository(db),
+        refresh_token_repo=SqlAlchemyRefreshTokenRepository(db),
         password_hasher=get_password_hasher(),
         token_service=get_token_service(),
     )
 
 
-def provide_login_user() -> LoginUserUseCase:
+def provide_login_user(db: AsyncSession = Depends(get_db)) -> LoginUserUseCase:
     return LoginUserUseCase(
-        user_repo=get_user_repository(),
-        refresh_token_repo=get_refresh_token_repository(),
+        user_repo=SqlAlchemyUserRepository(db),
+        refresh_token_repo=SqlAlchemyRefreshTokenRepository(db),
         password_hasher=get_password_hasher(),
         token_service=get_token_service(),
     )
 
 
-def provide_refresh_session() -> RefreshSessionUseCase:
+def provide_refresh_session(db: AsyncSession = Depends(get_db)) -> RefreshSessionUseCase:
     return RefreshSessionUseCase(
-        user_repo=get_user_repository(),
-        refresh_token_repo=get_refresh_token_repository(),
+        user_repo=SqlAlchemyUserRepository(db),
+        refresh_token_repo=SqlAlchemyRefreshTokenRepository(db),
         token_service=get_token_service(),
     )
 
 
-def provide_logout_user() -> LogoutUserUseCase:
+def provide_logout_user(db: AsyncSession = Depends(get_db)) -> LogoutUserUseCase:
     return LogoutUserUseCase(
-        refresh_token_repo=get_refresh_token_repository(),
+        refresh_token_repo=SqlAlchemyRefreshTokenRepository(db),
         token_service=get_token_service(),
     )
 
 
-def provide_get_current_user() -> GetCurrentUserUseCase:
+def provide_get_current_user(db: AsyncSession = Depends(get_db)) -> GetCurrentUserUseCase:
     return GetCurrentUserUseCase(
-        user_repo=get_user_repository(),
+        user_repo=SqlAlchemyUserRepository(db),
     )
 
 
-def provide_change_password() -> ChangePasswordUseCase:
+def provide_change_password(db: AsyncSession = Depends(get_db)) -> ChangePasswordUseCase:
     return ChangePasswordUseCase(
-        user_repo=get_user_repository(),
-        refresh_token_repo=get_refresh_token_repository(),
+        user_repo=SqlAlchemyUserRepository(db),
+        refresh_token_repo=SqlAlchemyRefreshTokenRepository(db),
         password_hasher=get_password_hasher(),
     )

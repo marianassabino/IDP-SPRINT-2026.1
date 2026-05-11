@@ -6,9 +6,17 @@ Backend inicial do Normalizador JusBrasil usando FastAPI + Uvicorn, com dependen
 
 ### Rodar com Docker
 
+1. Suba os containers:
+
 ```bash
 make build
 make up
+```
+
+2. Aplique as migrations:
+
+```bash
+make migrate
 ```
 
 Health check:
@@ -20,13 +28,16 @@ make health
 Comandos uteis:
 
 ```bash
-make help     # lista todos os comandos
-make logs     # acompanha logs da API
-make ps       # ve status dos containers
-make test     # roda os testes no Docker
-make restart  # reinicia a API
-make rebuild  # reconstroi e sobe do zero
-make down     # derruba a API
+make help                       # lista todos os comandos
+make logs                       # acompanha logs da API
+make ps                         # ve status dos containers
+make test                       # roda os testes no Docker
+make restart                    # reinicia a API
+make rebuild                    # reconstroi e sobe do zero
+make down                       # derruba a API
+make migrate                    # aplica migrations pendentes
+make migration MSG="add_foo"    # gera nova migration
+make shell-db                   # abre psql no banco
 ```
 
 ### Rodar localmente
