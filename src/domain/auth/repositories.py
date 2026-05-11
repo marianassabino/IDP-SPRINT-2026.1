@@ -1,6 +1,4 @@
-"""
-Contrato para persistência de refresh tokens.
-"""
+"""Contrato para persistência de refresh tokens."""
 from typing import Protocol
 from uuid import UUID
 
@@ -8,7 +6,7 @@ from domain.auth.entities import RefreshToken
 
 
 class RefreshTokenRepository(Protocol):
-    """Contrato para qualquer repositório de refresh tokens."""
+    """Interface para repositório de refresh tokens; qualquer classe com esses métodos a satisfaz."""
 
     async def save(self, refresh_token: RefreshToken) -> None:
         """Cria ou atualiza um refresh token."""

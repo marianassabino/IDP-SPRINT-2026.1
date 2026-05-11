@@ -7,12 +7,7 @@ from domain.users.repositories import UserRepository
 
 
 class InMemoryUserRepository(UserRepository):
-    """
-    Guarda usuários num dicionário em memória.
-
-    Útil para testes e para desenvolvimento enquanto a implementação
-    de banco (SQLAlchemy) não está pronta. NÃO usar em produção.
-    """
+    """Repositório de usuários em memória; útil para testes e desenvolvimento, não usar em produção."""
 
     def __init__(self) -> None:
         self._by_id: dict[UUID, User] = {}
@@ -27,7 +22,6 @@ class InMemoryUserRepository(UserRepository):
             return self._by_id.get(user_id)
 
     async def find_by_email(self, email: str) -> User | None:
-        # Normaliza igual ao domain
         normalized = email.strip().lower()
         async with self._lock:
             for user in self._by_id.values():

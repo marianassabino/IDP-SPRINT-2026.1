@@ -55,12 +55,7 @@ async def change_password(
     current_user_id: UUID = Depends(get_current_user_id),
     use_case: ChangePasswordUseCase = Depends(provide_change_password),
 ) -> ChangePasswordResponse:
-    """
-    Altera a senha do usuário autenticado.
-
-    Após a troca: revoga todos os refresh tokens ativos (no caso de uso)
-    e limpa os cookies da sessão atual (aqui na rota), forçando re-login.
-    """
+    """Altera a senha do usuário autenticado, revoga os refresh tokens e limpa os cookies forçando re-login."""
     try:
         await use_case.execute(
             ChangePasswordCommand(
@@ -72,7 +67,6 @@ async def change_password(
     except Exception as exc:
         raise domain_error_to_http(exc)
 
-    # Força re-login limpando cookies atuais
     clear_auth_cookies(response)
 
     return ChangePasswordResponse(password_updated=True)

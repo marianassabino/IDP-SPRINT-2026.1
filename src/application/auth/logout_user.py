@@ -6,17 +6,7 @@ from application.auth.services import TokenService
 
 
 class LogoutUserUseCase:
-    """
-    Encerra a sessão do usuário.
-
-    Fluxo:
-      1. Se há refresh token no cookie, tenta revogá-lo.
-      2. Se não há ou não é encontrado, ignora (logout deve ser idempotente).
-
-    Não levanta erro se o token já estiver revogado/expirado/inexistente.
-    Logout sempre "funciona" do ponto de vista do cliente — a limpeza dos
-    cookies acontece na camada HTTP independentemente.
-    """
+    """Revoga o refresh token do cookie se existir; ignora tokens inválidos para garantir idempotência."""
 
     def __init__(
         self,
@@ -34,7 +24,6 @@ class LogoutUserUseCase:
         stored = await self._refresh_token_repo.find_by_hash(token_hash)
 
         if stored is None or stored.is_revoked():
-            # Já não havia sessão válida. Não há nada pra fazer.
             return
 
         stored.revoke()

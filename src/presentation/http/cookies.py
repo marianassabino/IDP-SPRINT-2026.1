@@ -1,8 +1,4 @@
-"""
-Helpers para setar e limpar os cookies de autenticação.
-
-Centralizar isso aqui evita duplicar a configuração em cada rota.
-"""
+"""Helpers para setar e limpar os cookies de autenticação de forma centralizada."""
 from fastapi import Response
 
 ACCESS_TOKEN_COOKIE = "access_token"

@@ -1,9 +1,4 @@
-"""
-Exceções do domínio de usuários.
-
-São lançadas pelos casos de uso quando regras de negócio são violadas.
-A camada de apresentação (FastAPI) captura e converte para HTTP status code.
-"""
+"""Exceções do domínio de usuários lançadas pelos casos de uso quando regras de negócio são violadas."""
 
 
 class UserDomainError(Exception):

@@ -1,9 +1,4 @@
-"""
-Conversão centralizada de exceções de domínio/aplicação para HTTPException.
-
-Mantém as rotas limpas e garante consistência:
-qualquer rota que lance EmailAlreadyExists vira sempre o mesmo 409.
-"""
+"""Converte exceções de domínio para HTTPException de forma centralizada, garantindo consistência entre rotas."""
 from fastapi import HTTPException, status
 
 from domain.auth.exceptions import (
@@ -25,13 +20,7 @@ from domain.users.exceptions import (
 
 
 def domain_error_to_http(exc: Exception) -> HTTPException:
-    """
-    Converte qualquer exceção de domínio/aplicação para HTTPException.
-
-    Mantém mensagem genérica em casos sensíveis (credenciais inválidas,
-    refresh token inválido) por motivos de segurança.
-    """
-    # --- Erros de credenciais e tokens (sempre 401 com mensagem genérica) ---
+    """Mapeia exceções de domínio para o HTTPException correspondente com status code adequado."""
     if isinstance(exc, InvalidCredentials):
         return HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -46,7 +35,6 @@ def domain_error_to_http(exc: Exception) -> HTTPException:
             detail="Not authenticated.",
         )
 
-    # --- Erros de usuário ---
     if isinstance(exc, EmailAlreadyExists):
         return HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -65,12 +53,10 @@ def domain_error_to_http(exc: Exception) -> HTTPException:
             detail=str(exc),
         )
 
-    # --- Catch-all para outras exceções de domínio ---
     if isinstance(exc, (AuthDomainError, UserDomainError)):
         return HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(exc),
         )
 
-    # Re-raise se não souber tratar (vira 500)
     raise exc

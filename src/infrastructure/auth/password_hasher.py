@@ -8,8 +8,6 @@ class Argon2PasswordHasher(PasswordHasher):
     """Hash de senha usando Argon2 (algoritmo recomendado pelo OWASP)."""
 
     def __init__(self) -> None:
-        # pwdlib.recommended() retorna um PasswordHash configurado com Argon2
-        # com parâmetros seguros por padrão.
         self._hasher = PasswordHash.recommended()
 
     def hash(self, password: str) -> str:

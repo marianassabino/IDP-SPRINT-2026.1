@@ -3,8 +3,6 @@ from dataclasses import dataclass
 from uuid import UUID
 
 
-# ---------------- INPUT DTOs ----------------
-
 @dataclass(frozen=True)
 class RegisterUserCommand:
     """Dados de entrada para registrar um novo usuário."""
@@ -31,15 +29,9 @@ class LogoutUserCommand:
     refresh_token: str | None
 
 
-# ---------------- OUTPUT DTOs ----------------
-
 @dataclass(frozen=True)
 class AuthenticatedSession:
-    """
-    Resultado de qualquer operação que cria/renova sessão (register, login, refresh).
-
-    Contém o usuário e os tokens gerados, pra rota poder responder e setar cookies.
-    """
+    """Resultado de operações que criam ou renovam sessão, contendo usuário e tokens gerados."""
     user_id: UUID
     user_email: str
     access_token: str

@@ -1,12 +1,4 @@
-"""
-Container de dependências (Composition Root).
-
-Cria as implementações concretas e as injeta nos casos de uso.
-
-Quando seu colega terminar a parte de banco real (SQLAlchemy),
-basta trocar as duas linhas que instanciam os repositórios em memória
-pelas implementações com banco. Nada mais muda.
-"""
+"""Container de dependências (Composition Root) que instancia e injeta implementações concretas nos casos de uso."""
 from functools import lru_cache
 
 from application.auth import (
@@ -27,10 +19,6 @@ from infrastructure.persistence import (
 from infrastructure.settings import Settings, get_settings as _get_settings_cached
 
 
-# ---------------- SINGLETONS ----------------
-# @lru_cache garante que a função é chamada UMA vez e o resultado fica em cache.
-# Isso transforma cada função em um "singleton" do escopo do processo.
-
 def get_settings() -> Settings:
     """Configurações lidas do .env (reusa o singleton do infrastructure)."""
     return _get_settings_cached()
@@ -38,7 +26,7 @@ def get_settings() -> Settings:
 
 @lru_cache
 def get_password_hasher() -> PasswordHasher:
-    """Hasher singleton (instanciar Argon2 cada request é caro)."""
+    """Hasher singleton (instanciar Argon2 a cada request é caro)."""
     return Argon2PasswordHasher()
 
 
@@ -56,24 +44,15 @@ def get_token_service() -> TokenService:
 
 @lru_cache
 def get_user_repository() -> UserRepository:
-    """
-    Repositório de usuários.
-
-    Hoje em memória. Quando o colega entregar a versão com banco,
-    troca aqui pelo SqlAlchemyUserRepository(session_factory=...).
-    """
+    """Repositório de usuários em memória; trocar pela implementação com banco quando disponível."""
     return InMemoryUserRepository()
 
 
 @lru_cache
 def get_refresh_token_repository() -> RefreshTokenRepository:
-    """Repositório de refresh tokens. Mesma observação acima."""
+    """Repositório de refresh tokens em memória; trocar pela implementação com banco quando disponível."""
     return InMemoryRefreshTokenRepository()
 
-
-# ---------------- USE CASE PROVIDERS ----------------
-# Essas funções montam um caso de uso pronto pra usar.
-# FastAPI vai chamar via Depends() em cada request.
 
 def provide_register_user() -> RegisterUserUseCase:
     return RegisterUserUseCase(
