@@ -1,12 +1,16 @@
 """Implementações de persistência (infrastructure)."""
-from infrastructure.persistence.in_memory_refresh_token_repository import (
-    InMemoryRefreshTokenRepository,
+from infrastructure.persistence.repositories.auth_repository import (
+    SqlAlchemyRefreshTokenRepository,
 )
-from infrastructure.persistence.in_memory_user_repository import (
-    InMemoryUserRepository,
+from infrastructure.persistence.repositories.project_repository import (
+    SqlAlchemyProjectRepository,
+)
+from infrastructure.persistence.repositories.user_repository import (
+    SqlAlchemyUserRepository,
 )
 
 __all__ = [
-    "InMemoryUserRepository",
-    "InMemoryRefreshTokenRepository",
+    "SqlAlchemyUserRepository",
+    "SqlAlchemyRefreshTokenRepository",
+    "SqlAlchemyProjectRepository",
 ]

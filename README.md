@@ -53,6 +53,17 @@ uv run uvicorn main:app --app-dir src --reload
 src/
   domain/          # entidades e regras de negocio
   application/     # casos de uso
-  infrastructure/  # configuracoes e adapters externos
+  infrastructure/  # configuracoes e adapters externos (DB, auth, storage)
   presentation/    # camada HTTP
 ```
+
+### Modulos
+
+| Modulo  | Endpoints | Detalhes |
+|---|---|---|
+| Auth    | `POST /auth/{register,login,refresh,logout}` | JWT em cookies HTTP-only. Ver [docs/auth-user-crud.md](docs/auth-user-crud.md). |
+| Users   | `GET /users/me`, `PATCH /users/me/password`  | Requer cookie `access_token` valido. |
+| Projects| `POST/GET/PATCH/DELETE /projects`            | CRUD com paginacao. Ver [docs/CrudProjectsChangeLog.md](docs/CrudProjectsChangeLog.md). |
+| Health  | `GET /health`                                 | Status da API. |
+
+Swagger UI em `http://localhost:8000/docs`.
