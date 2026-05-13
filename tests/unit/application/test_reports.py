@@ -77,6 +77,9 @@ class FakeReportRepository(ReportRepository):
         r = self._store.get(id)
         return r if r and r.project_id == project_id else None
 
+    async def get_by_id_internal(self, id: UUID) -> Report | None:
+        return self._store.get(id)
+
     async def list_by_project(self, project_id: UUID, offset: int, limit: int):
         items = [r for r in self._store.values() if r.project_id == project_id]
         return items[offset:offset + limit], len(items)
@@ -97,6 +100,9 @@ class FakeExecutionRepository(ExecutionRepository):
     async def get_by_id(self, id: UUID, report_id: UUID) -> ReportExecution | None:
         e = self._store.get(id)
         return e if e and e.report_id == report_id else None
+
+    async def get_by_id_no_report_check(self, id: UUID) -> ReportExecution | None:
+        return self._store.get(id)
 
     async def list_by_report(self, report_id: UUID) -> list[ReportExecution]:
         return [e for e in self._store.values() if e.report_id == report_id]
@@ -376,3 +382,84 @@ async def test_reprocess_report_not_found():
     )
     with pytest.raises(ReportNotFound):
         await uc.execute(report_id=uuid4(), project_id=uuid4())
+
+
+# ── ProcessReportUseCase (worker) ──────────────────────────────────────────────
+
+from application.reports.process_report import ProcessReportUseCase
+from application.reports.report_processor import ProcessingResult, ReportProcessor
+
+
+class FakeReportProcessor(ReportProcessor):
+    async def process(self, content, original_filename, column_config_snapshot) -> ProcessingResult:
+        return ProcessingResult(
+            content=content + b"_processed",
+            filename="result_" + original_filename,
+            content_type="text/csv",
+        )
+
+
+class FailingReportProcessor(ReportProcessor):
+    async def process(self, content, original_filename, column_config_snapshot) -> ProcessingResult:
+        raise RuntimeError("processing failed")
+
+
+def _make_queued_execution(report_id: UUID) -> ReportExecution:
+    n = _now()
+    return ReportExecution(id=uuid4(), report_id=report_id, status=ExecutionStatus.QUEUED,
+                           progress_percent=0, current_step=None, started_at=None, finished_at=None,
+                           result_file_key=None, error_log=None,
+                           column_config_snapshot={}, created_at=n, updated_at=n)
+
+
+async def test_process_report_transitions_to_ready():
+    project_id = uuid4()
+    report = _make_report(project_id)
+    execution = _make_queued_execution(report.id)
+
+    storage = FakeFileStorage()
+    await storage.save(report.original_file_key, b"col_a\nval1\n")
+
+    report_repo = FakeReportRepository()
+    await report_repo.create(report)
+    exec_repo = FakeExecutionRepository()
+    await exec_repo.create(execution)
+
+    uc = ProcessReportUseCase(report_repo, exec_repo, storage, FakeReportProcessor())
+    await uc.execute(execution.id)
+
+    updated = await exec_repo.get_by_id_no_report_check(execution.id)
+    assert updated.status == ExecutionStatus.READY
+    assert updated.result_file_key is not None
+    assert updated.finished_at is not None
+    assert updated.progress_percent == 100
+
+
+async def test_process_report_transitions_to_error_on_failure():
+    project_id = uuid4()
+    report = _make_report(project_id)
+    execution = _make_queued_execution(report.id)
+
+    storage = FakeFileStorage()
+    await storage.save(report.original_file_key, b"col_a\nval1\n")
+
+    report_repo = FakeReportRepository()
+    await report_repo.create(report)
+    exec_repo = FakeExecutionRepository()
+    await exec_repo.create(execution)
+
+    uc = ProcessReportUseCase(report_repo, exec_repo, storage, FailingReportProcessor())
+    await uc.execute(execution.id)
+
+    updated = await exec_repo.get_by_id_no_report_check(execution.id)
+    assert updated.status == ExecutionStatus.ERROR
+    assert "processing failed" in (updated.error_log or "")
+    assert updated.finished_at is not None
+
+
+async def test_process_report_execution_not_found():
+    uc = ProcessReportUseCase(
+        FakeReportRepository(), FakeExecutionRepository(), FakeFileStorage(), FakeReportProcessor()
+    )
+    with pytest.raises(ReportNotFound):
+        await uc.execute(uuid4())

@@ -39,6 +39,11 @@ class SqlAlchemyExecutionRepository(ExecutionRepository):
         model = (await self._session.execute(stmt)).scalar_one_or_none()
         return model._to_entity() if model else None
 
+    async def get_by_id_no_report_check(self, id: UUID) -> ReportExecution | None:
+        stmt = select(ReportExecutionModel).where(ReportExecutionModel.id == id)
+        model = (await self._session.execute(stmt)).scalar_one_or_none()
+        return model._to_entity() if model else None
+
     async def list_by_report(self, report_id: UUID) -> list[ReportExecution]:
         stmt = (
             select(ReportExecutionModel)
