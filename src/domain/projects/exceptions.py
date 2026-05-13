@@ -4,3 +4,7 @@ class ProjectNotFound(Exception):
 
 class ProjectNameAlreadyExists(ValueError):
     pass
+
+
+class ColumnConfigNotFound(Exception):
+    pass
