@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, Index, String, UniqueConstraint, text
+from sqlalchemy import ForeignKey, Index, String, text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column
@@ -28,21 +28,22 @@ class DictionaryEntryModel(Base, TimestampMixin):
     payload: Mapped[dict] = mapped_column(JSONB, nullable=False)
 
     __table_args__ = (
-        # partial unique indexes — Alembic não gera automaticamente, criados via migration manual
         Index("idx_dictionary_user", "user_id"),
         Index(
             "idx_dictionary_project",
             "project_id",
             postgresql_where=text("project_id IS NOT NULL"),
         ),
-        UniqueConstraint(
+        Index(
+            "uq_dictionary_global",
             "user_id", "kind", "name",
-            name="uq_dictionary_global",
+            unique=True,
             postgresql_where=text("project_id IS NULL"),
         ),
-        UniqueConstraint(
+        Index(
+            "uq_dictionary_project",
             "project_id", "kind", "name",
-            name="uq_dictionary_project",
+            unique=True,
             postgresql_where=text("project_id IS NOT NULL"),
         ),
     )
