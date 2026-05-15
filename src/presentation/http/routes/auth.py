@@ -35,7 +35,7 @@ from presentation.http.schemas import (
     UserResponse,
 )
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(tags=["auth"])
 
 
 @router.post(

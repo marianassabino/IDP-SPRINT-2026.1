@@ -17,6 +17,11 @@ class Settings(BaseSettings):
     cookie_secure: bool = False
     cookie_samesite: str = "lax"
 
+    #CORS -> origens permitidas
+    cors_allowed_origins: list[str] = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    ]
     # Postgres
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/normalizador"
 
