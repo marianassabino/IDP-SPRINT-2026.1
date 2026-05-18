@@ -36,6 +36,11 @@ class SqlAlchemyReportRepository(ReportRepository):
         model = (await self._session.execute(stmt)).scalar_one_or_none()
         return model._to_entity() if model else None
 
+    async def get_by_id_internal(self, id: UUID) -> Report | None:
+        stmt = select(ReportModel).where(ReportModel.id == id)
+        model = (await self._session.execute(stmt)).scalar_one_or_none()
+        return model._to_entity() if model else None
+
     async def list_by_project(
         self, project_id: UUID, offset: int, limit: int
     ) -> tuple[list[Report], int]:
