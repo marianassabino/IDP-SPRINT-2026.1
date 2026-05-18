@@ -1,4 +1,5 @@
 import logging
+from inspect import isawaitable
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -61,6 +62,7 @@ class ProcessReportUseCase:
             execution.status = ExecutionStatus.READY
             execution.progress_percent = 100
             execution.result_file_key = result_key
+            execution.error_log = None
             execution.finished_at = now
             execution.updated_at = now
 
@@ -76,7 +78,10 @@ class ProcessReportUseCase:
 
     async def _collect_stream(self, key: str) -> bytes:
         chunks: list[bytes] = []
-        async for chunk in await self._storage.load_stream(key):
+        stream = self._storage.load_stream(key)
+        if isawaitable(stream):
+            stream = await stream
+        async for chunk in stream:
             chunks.append(chunk)
         return b"".join(chunks)
 
