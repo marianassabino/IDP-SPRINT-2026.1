@@ -14,12 +14,16 @@ class UserModel(Base, TimestampMixin):
     id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True)
     email: Mapped[str] = mapped_column(String(255), nullable=False, unique=True)
     password_hash: Mapped[str] = mapped_column(Text, nullable=False)
+    name: Mapped[str] = mapped_column(String(120), nullable=False, server_default="")
+    last_name: Mapped[str] = mapped_column(String(120), nullable=False, server_default="")
 
     def _to_entity(self) -> User:
         return User(
             id=self.id,
             email=self.email,
             password_hash=self.password_hash,
+            name=self.name,
+            last_name=self.last_name,
             created_at=self.created_at,
             updated_at=self.updated_at,
         )

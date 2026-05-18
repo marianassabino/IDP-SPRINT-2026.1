@@ -10,6 +10,8 @@ class RegisterUserCommand:
     """Dados de entrada para registrar um novo usuário."""
     email: str
     password: str
+    name: str
+    last_name: str
 
 
 @dataclass(frozen=True)
@@ -42,6 +44,8 @@ class AuthenticatedSession:
     """
     user_id: UUID
     user_email: str
+    user_name: str
+    user_last_name: str
     access_token: str
     access_token_expires_in: int
     refresh_token: str

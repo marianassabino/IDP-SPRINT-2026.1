@@ -52,7 +52,7 @@ class RegisterUserUseCase:
         password_hash = self._hasher.hash(command.password)
 
         # 4. Cria e salva usuário
-        user = User(email=command.email, password_hash=password_hash)
+        user = User(email=command.email, password_hash=password_hash, name=command.name, last_name=command.last_name)
         await self._user_repo.save(user)
 
         # 5. Emite tokens
@@ -77,6 +77,8 @@ class RegisterUserUseCase:
         return AuthenticatedSession(
             user_id=user.id,
             user_email=user.email,
+            user_name=user.name,
+            user_last_name=user.last_name,
             access_token=access.value,
             access_token_expires_in=access.expires_in_seconds,
             refresh_token=refresh_pair.plain_value,

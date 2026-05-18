@@ -53,7 +53,12 @@ async def register(
     """Cria um novo usuário, gera tokens e define cookies de sessão."""
     try:
         session = await use_case.execute(
-            RegisterUserCommand(email=payload.email, password=payload.password)
+            RegisterUserCommand(
+                email=payload.email,
+                password=payload.password,
+                name=payload.name,
+                last_name=payload.last_name,
+            )
         )
     except Exception as exc:
         raise domain_error_to_http(exc)
@@ -73,7 +78,7 @@ async def register(
         samesite=settings.cookie_samesite,
     )
 
-    return UserResponse(id=str(session.user_id), email=session.user_email)
+    return UserResponse(id=str(session.user_id), email=session.user_email, name=session.user_name, last_name=session.user_last_name)
 
 
 @router.post(
@@ -111,7 +116,7 @@ async def login(
         samesite=settings.cookie_samesite,
     )
 
-    return UserResponse(id=str(session.user_id), email=session.user_email)
+    return UserResponse(id=str(session.user_id), email=session.user_email, name=session.user_name, last_name=session.user_last_name)
 
 
 @router.post(
