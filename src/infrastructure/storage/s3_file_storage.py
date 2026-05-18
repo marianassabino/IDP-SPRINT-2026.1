@@ -35,9 +35,23 @@ class S3FileStorage(FileStorage):
     async def load_stream(self, key: str) -> AsyncIterator[bytes]:
         async with self._client() as s3:
             response = await s3.get_object(Bucket=self._bucket, Key=key)
-            async with response["Body"] as stream:
-                async for chunk in stream.iter_chunks(chunk_size=65536):
+            body = response["Body"]
+
+            if hasattr(body, "iter_chunks"):
+                async for chunk in body.iter_chunks(chunk_size=65536):
                     yield chunk
+                return
+
+            if hasattr(body, "content") and hasattr(body.content, "iter_chunked"):
+                async for chunk in body.content.iter_chunked(65536):
+                    yield chunk
+                return
+
+            while True:
+                chunk = await body.read(65536)
+                if not chunk:
+                    break
+                yield chunk
 
     async def delete(self, key: str) -> None:
         async with self._client() as s3:
