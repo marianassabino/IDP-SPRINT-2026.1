@@ -17,7 +17,7 @@ async def clean_db():
 
 
 async def register_and_login(client: AsyncClient, email: str, password: str = "Senha@123") -> None:
-    await client.post("/auth/register", json={"email": email, "password": password})
+    await client.post("/auth/register", json={"name": "Test", "last_name": "User", "email": email, "password": password})
     await client.post("/auth/login", json={"email": email, "password": password})
 
 

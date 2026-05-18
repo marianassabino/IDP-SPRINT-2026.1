@@ -8,6 +8,8 @@ class User:
     """Usuário do sistema com email normalizado em lowercase e hash de senha."""
     email: str
     password_hash: str
+    name: str
+    last_name: str
     id: UUID = field(default_factory=uuid4)
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))

@@ -19,12 +19,14 @@ class SqlAlchemyUserRepository:
                 id=user.id,
                 email=user.email,
                 password_hash=user.password_hash,
+                name=user.name,
+                last_name=user.last_name,
                 created_at=user.created_at,
                 updated_at=user.updated_at,
             )
             .on_conflict_do_update(
                 index_elements=["id"],
-                set_={"password_hash": user.password_hash, "updated_at": user.updated_at},
+                set_={"password_hash": user.password_hash, "name": user.name, "last_name": user.last_name, "updated_at": user.updated_at},
             )
         )
         await self._session.execute(stmt)

@@ -58,6 +58,8 @@ class RegisterUserUseCase:
         return AuthenticatedSession(
             user_id=user.id,
             user_email=user.email,
+            user_name=user.name,
+            user_last_name=user.last_name,
             access_token=access.value,
             access_token_expires_in=access.expires_in_seconds,
             refresh_token=refresh_pair.plain_value,
