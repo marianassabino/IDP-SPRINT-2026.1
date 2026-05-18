@@ -4,7 +4,7 @@ APP_URL := http://localhost:8000
 
 .DEFAULT_GOAL := help
 
-.PHONY: help build up start down stop restart rebuild logs ps shell health test clean migrate migration shell-db
+.PHONY: help build up start down stop restart rebuild logs logs-localstack ps shell health test clean migrate migration shell-db s3-buckets
 
 help: ## Lista os comandos disponiveis
 	@echo "Comandos disponiveis:"
@@ -31,6 +31,9 @@ rebuild: down build up ## Reconstroi e sobe a API do zero
 logs: ## Mostra os logs da API
 	@$(COMPOSE) logs -f $(SERVICE)
 
+logs-localstack: ## Mostra os logs do LocalStack
+	@$(COMPOSE) logs -f localstack
+
 ps: ## Mostra o status dos containers
 	@$(COMPOSE) ps
 
@@ -55,3 +58,6 @@ migration: ## Gera nova migration (uso: make migration MSG="descricao")
 
 shell-db: ## Abre psql dentro do container do banco
 	@$(COMPOSE) exec db psql -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-normalizador}
+
+s3-buckets: ## Lista buckets S3 no LocalStack
+	@$(COMPOSE) exec localstack awslocal s3 ls
