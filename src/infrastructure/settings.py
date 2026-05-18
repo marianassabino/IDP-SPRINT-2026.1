@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     # Postgres
     database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/normalizador"
 
+    # Upload
+    max_upload_size_mb: int = 30
+
     # AWS S3
     aws_access_key_id: str = ""
     aws_secret_access_key: str = ""
