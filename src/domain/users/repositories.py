@@ -1,9 +1,4 @@
-"""
-Contrato (interface) para persistência de usuários.
-
-Usa typing.Protocol para definir o que qualquer implementação precisa ter.
-Quem implementa de fato fica em infrastructure (in-memory, SQLAlchemy, etc).
-"""
+"""Contrato (interface) para persistência de usuários via typing.Protocol."""
 from typing import Protocol
 from uuid import UUID
 
@@ -11,12 +6,7 @@ from domain.users.entities import User
 
 
 class UserRepository(Protocol):
-    """
-    Contrato para qualquer repositório de usuários.
-
-    Qualquer classe que tenha esses métodos com essas assinaturas
-    é automaticamente um UserRepository, sem precisar herdar nada.
-    """
+    """Interface para repositório de usuários; qualquer classe com esses métodos a satisfaz."""
 
     async def save(self, user: User) -> None:
         """Cria ou atualiza um usuário."""

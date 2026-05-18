@@ -1,3 +1,6 @@
+"""Container de dependências (Composition Root) que instancia e injeta implementações concretas nos casos de uso."""
+from functools import lru_cache
+
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +17,6 @@ from infrastructure.persistence.database import get_db
 from infrastructure.persistence.repositories.auth_repository import SqlAlchemyRefreshTokenRepository
 from infrastructure.persistence.repositories.user_repository import SqlAlchemyUserRepository
 from infrastructure.settings import Settings, get_settings as _get_settings_cached
-from functools import lru_cache
 
 
 def get_settings() -> Settings:

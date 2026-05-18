@@ -15,11 +15,7 @@ from domain.auth.exceptions import InvalidToken, TokenExpired
 
 
 class JwtTokenService(TokenService):
-    """
-    Implementação de TokenService:
-      - Access token: JWT HS256 com payload {sub, type, iat, exp}
-      - Refresh token: string aleatória + SHA-256 do banco
-    """
+    """Gera access tokens JWT HS256 e refresh tokens aleatórios com hash SHA-256 para persistência."""
 
     def __init__(
         self,
@@ -32,8 +28,6 @@ class JwtTokenService(TokenService):
         self._algorithm = algorithm
         self._access_expire_minutes = access_token_expire_minutes
         self._refresh_expire_days = refresh_token_expire_days
-
-    # ---------- ACCESS TOKEN ----------
 
     def issue_access_token(self, user_id: UUID) -> AccessToken:
         now = datetime.now(timezone.utc)
@@ -64,7 +58,6 @@ class JwtTokenService(TokenService):
         except jwt.InvalidTokenError as e:
             raise InvalidToken("Invalid access token.") from e
 
-        # Defesa: só aceitamos tokens do tipo 'access' nesse método
         if payload.get("type") != "access":
             raise InvalidToken("Token is not an access token.")
 
@@ -77,10 +70,7 @@ class JwtTokenService(TokenService):
         except (ValueError, TypeError) as e:
             raise InvalidToken("Token subject is not a valid UUID.") from e
 
-    # ---------- REFRESH TOKEN ----------
-
     def issue_refresh_token(self, user_id: UUID) -> RefreshTokenPair:
-        # 32 bytes = 256 bits de entropia, mais que suficiente
         plain = secrets.token_urlsafe(32)
         token_hash = self.hash_refresh_token(plain)
 
@@ -91,6 +81,4 @@ class JwtTokenService(TokenService):
         )
 
     def hash_refresh_token(self, plain_value: str) -> str:
-        # SHA-256 é determinístico: o mesmo input sempre gera o mesmo hash.
-        # Isso permite buscar pelo hash no banco quando o cliente envia o token.
         return hashlib.sha256(plain_value.encode("utf-8")).hexdigest()

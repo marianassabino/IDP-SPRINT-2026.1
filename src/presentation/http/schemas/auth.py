@@ -1,13 +1,6 @@
-"""
-Schemas Pydantic para os endpoints de autenticação.
-
-Esses schemas definem o formato JSON de entrada e saída das rotas HTTP.
-São diferentes dos DTOs da application: estes conhecem HTTP, JSON, email, etc.
-"""
+"""Schemas Pydantic para os endpoints de autenticação definindo formato JSON de entrada e saída."""
 from pydantic import BaseModel, EmailStr, Field
 
-
-# ---------------- REQUEST SCHEMAS ----------------
 
 class RegisterRequest(BaseModel):
     """Corpo da requisição POST /auth/register."""
@@ -23,15 +16,8 @@ class LoginRequest(BaseModel):
     password: str = Field(min_length=1, max_length=128)
 
 
-# ---------------- RESPONSE SCHEMAS ----------------
-
 class UserResponse(BaseModel):
-    """
-    Resposta com dados públicos do usuário.
-
-    Usada por /auth/register, /auth/login e /users/me.
-    NUNCA inclui password_hash.
-    """
+    """Resposta com dados públicos do usuário (sem password_hash); usada por register, login e /users/me."""
     id: str
     email: EmailStr
     name: str

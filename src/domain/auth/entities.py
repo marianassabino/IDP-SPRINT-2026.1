@@ -1,10 +1,4 @@
-"""
-Entidade RefreshToken do domínio.
-
-Representa um refresh token persistido. NÃO contém o token em texto puro,
-apenas seu hash (o token puro só existe no momento da criação, é enviado
-ao cliente via cookie e nunca mais é armazenado).
-"""
+"""Entidade RefreshToken do domínio; armazena apenas o hash do token, nunca o valor em texto puro."""
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
@@ -12,17 +6,7 @@ from uuid import UUID, uuid4
 
 @dataclass
 class RefreshToken:
-    """
-    Um refresh token persistido no sistema.
-
-    Atributos:
-        id: identificador único do registro.
-        user_id: a quem pertence.
-        token_hash: hash do token (nunca o token puro).
-        expires_at: quando vence (UTC).
-        revoked_at: se foi revogado (None = ativo).
-        created_at: quando foi criado.
-    """
+    """Refresh token persistido identificado por hash, com suporte a verificação de revogação e expiração."""
     user_id: UUID
     token_hash: str
     expires_at: datetime
